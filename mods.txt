@@ -1,4 +1,3 @@
-Fabric 1.20.4
 Skin Layers 3D (Fabric/Forge) - https://www.curseforge.com/minecraft/mc-mods/skin-layers-3d
 Blur (Fabric) - https://www.curseforge.com/minecraft/mc-mods/blur-fabric
 Chunks fade in - https://www.curseforge.com/minecraft/mc-mods/chunks-fade-in

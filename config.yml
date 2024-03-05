@@ -1,0 +1,9 @@
+minecraft:
+  loader: "Fabric"
+  version: "1.20.4"
+
+modpack:
+  name: "Fabulously Optimized ++"
+  version: "1.0.0"
+  author: "LyFlow"
+  
