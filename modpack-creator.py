@@ -24,13 +24,21 @@ mods_categorie_id = get_name_id("categories", "Mods", params={'gameId' : minecra
 modpacks_categorie_id = get_name_id("categories", "Modpacks", params={'gameId' : minecraft_id})
 
 
-def mod_id_already_save(name):
+def get_id_files_content():
+    content = {}
+    for file in ["mods_id.txt", "modpacks_id.txt", "resourcepacks_id.txt"]:
+        for line in read_file(data_path+file):
+            split = line.split(" - ")
+            content[split[0]] = split[1]
+    return content
+
+
+def id_already_save(name):
     pass
 
 
-def setup_target_mod(mods_id, mods_name, loader_id):
+def setup_target_mod(loader_id):
     lines = read_file("mods.txt")
-    print(f'detected mods in file : {mods_number}')
 
     for line in lines:
         mod_name = line.split(" - ")[0]
@@ -98,7 +106,7 @@ def setup_target_modpack(loader_id):
     write_file(to_write, data_path, "infmods_modpacks.txt")
 
 
-def setup_mod_id(mods_id, require_depencies, incompatible_dependencies, mods_link, mods_name, loader_info):
+def setup_mod_id():
     loader_id = mods_loader_type[loader_info[0]]
     game_version = loader_info[1]
 
@@ -189,13 +197,16 @@ def check_incompatibility(mods_id, require_depencies, incompatible_dependencies)
 
 
 if __name__ == "__main__":
-    # mods_id -> id - name - links
-    create_files_if_not_exist(data_path, ["mods_id.txt", "infmods.txt", "infmods_modpacks.txt"])
+    create_files_if_not_exist(data_path, ["mods_id.txt", "modpacks_id.txt", "resourcepacks_id.txt"])
     
-    # id : string
+    # name : id
+    content_id = get_id_files_content()
+    mods_id = {}
+
+    # id : name
     mods_name = {}
 
-    # (target_id, require_id)
+    # (target_id, incompatible_id)
     require_depencies = []
 
     # (target_id, incompatible_id)
@@ -208,13 +219,13 @@ if __name__ == "__main__":
     loader_info.append(mods_loader_type[loader_info[0]])
     print(f'detected info : {loader_info}')
 
-    setup_target_mod(mods_id, mods_name, loader_info[2])
+    setup_target_mod(loader_info[2])
     print(f'detected mods by name on curseforge : {len(mods_id)}')
     print(f'names : {mods_name}')
 
     setup_target_modpack(loader_info)
 
-    setup_mod_id(mods_id, require_depencies, incompatible_dependencies, mods_link, mods_name, loader_info)
+    setup_mod_id()
     print(f'names : {mods_name}')
     print(f'total mods to download : {len(mods_link)}')
     print(f'require : {require_depencies}')
