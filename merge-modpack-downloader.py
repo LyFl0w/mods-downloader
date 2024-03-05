@@ -1,7 +1,5 @@
 import requests
-import os
-import shutil
-import wget
+import json
 import time
 
 modsLoaderType =  {"Forge" : 1, "Cauldron" : 2, "LiteLoader" : 3, "Fabric" : 4, "Quilt" : 5, "NeoForge" : 6}
@@ -29,16 +27,23 @@ def filter_on(files, path, contain_data):
     return [file for file in files if all(data in file[path] for data in contain_data)]
 
 
-def setup_target_mod(mods_id, mods_name, file_path):
-
-    def get_id(path, filter, params=None):
+def get_name_id(path, filter, params=None):
         r = request(f'{api}/{path}', params)
         data = r["data"]
         data = filter_on(data, "name", [filter])
         return data[0]["id"]
 
-    minecraft_id = get_id("games", "Minecraft")
-    mods_categorie_id = get_id("categories", "Mods", params={'gameId' : minecraft_id})
+
+def setup_target_mod(mods_id, mods_name, file_path):
+    minecraft_id = get_name_id("games", "Minecraft")
+    mods_categorie_id = get_name_id("categories", "Mods", params={'gameId' : minecraft_id})
+    modpacks_categorie_id = get_name_id("categories", "Modpacks", params={'gameId' : minecraft_id})
+
+    def get_class_id(name: str):
+        if name.startswith("p:"):
+            return (modpacks_categorie_id, name[2:])
+        return (mods_categorie_id, name)
+
 
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -46,29 +51,29 @@ def setup_target_mod(mods_id, mods_name, file_path):
         loader_id = modsLoaderType[loader_info[0]]
         
         for line in lines[1:]:
-            mod_name = line.split(" - ")[0]
+            class_id, search = get_class_id(line.split(" - ")[0])
+            print(class_id, search)
             index = 0
             r = []
             
             while len(r) == 0 and index + 50 <= 10_000:
-                r = request(f'{curse_forge_api}/mods/search', params={'gameId' : minecraft_id, 'classId' : mods_categorie_id, 'filterText': mod_name,
+                r = request(f'{curse_forge_api}/mods/search', params={'gameId' : minecraft_id, 'classId' : class_id, 'filterText': search,
                                                             'gameFlavorId' : loader_id, 'index': index, 'sortField': 1})
                 if "data" not in r:
                     break
 
-                r = filter_on(r["data"], "name", mod_name)
+                r = filter_on(r["data"], "name", search)
                 index += 50
 
             if isinstance(r, dict) or index + 50 > 10_000:
-                print(f"mod not found : {mod_name}")
-                print(r)
+                print(f"mod not found : {search}")
                 continue
 
             mod = r[0]
             mod_id = mod['id']
 
             mods_id.append(mod_id)
-            mods_name[mod_id] = mod_name
+            mods_name[mod_id] = search
         
         return loader_info, len(lines)-1
 
@@ -80,7 +85,6 @@ def setup_mod_id(mods_id, require_depencies, incompatible_dependencies, mods_lin
     def setup_mod(mod_id):
         download_url = request(f'{curse_forge_api}/mods/{mod_id}/files', params={'sort': 'dateCreated', 'sortDescending' : 'true', 'gameFlavorId' : loader_id,
                                                                                  'removeAlphas': 'true'})
-        #print(download_url)
         if "data" not in download_url:
             print(f'{mods_name[mod_id]} not found in {loader_info[0]} {game_version}')
             return
@@ -124,6 +128,8 @@ def setup_mod_id(mods_id, require_depencies, incompatible_dependencies, mods_lin
         total_id = str(download_url["id"])
         first_id = total_id[:4].lstrip('0')
         second_id = total_id[4:].lstrip('0')
+        #download_id = str(download_url["id"])
+        #mods_link.append((mod_id, download_id))
         mods_link.append(f'https://mediafilez.forgecdn.net/files/{first_id}/{second_id}/{download_url["fileName"].replace("+", "%2B")}')
 
 
@@ -185,6 +191,8 @@ if __name__ == "__main__":
     # all mods links to download
     mods_link = []
 
+    data_pack_link = []
+
     loader_info, mods_number = setup_target_mod(mods_id, mods_name, "mods.txt")
     print(f'detected info : {loader_info}')
     print(f'detected mods in file : {mods_number}')
@@ -201,6 +209,6 @@ if __name__ == "__main__":
 
     if check_incompatibility(mods_id, require_depencies, incompatible_dependencies):
         print("S'il vous plait, mettez à jour votre liste de mods !")
-        exit(-1)
+        #exit(-1)
 
     write_links_to_file(mods_link, "mods_link.txt")
