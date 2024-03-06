@@ -16,7 +16,7 @@ def delete_folder_if_exist(directory):
 
 def delete_files_if_exist(files):
     for file in files:
-        if os.path.exists(files):
+        if os.path.exists(file):
             os.remove(file)
 
 
@@ -60,7 +60,7 @@ def write_file(datas, path=None, file_name=None):
         Path(path).mkdir(parents=True, exist_ok=True)
         file_path = get_real_path(path, file_name)
 
-    with open(file_path, 'w') as file:
+    with open(file_path, 'a+') as file:
         for data in datas:
             file.write(data + '\n')
 
