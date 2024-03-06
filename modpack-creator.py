@@ -113,10 +113,12 @@ def setup_target_mod(loader_id):
 
         mod = r[0]
         mod_id = mod['id']
+        mod_name = mod['name']
         curse_forge_link = "https://www.curseforge.com/minecraft/mc-mods/"+mod["slug"]
 
         add_to_list(mod_id, mod_name, "mod")
-        to_write.append(f'{mod_name} - {mod_id} - {curse_forge_link}')
+        if not is_already_save(mod_name):
+            to_write.append(f'{mod_name} - {mod_id} - {curse_forge_link}')
 
     if len(to_write) > 0:    
         print("aaa")
@@ -176,6 +178,7 @@ def setup_target_modpack_mod(loader_id):
 
             if categorie_id == mods_categorie_id:
                 if is_not_save:
+                    print(to_write)
                     to_write_mods.append(to_write)
                 cat = "mod"
                 
@@ -232,7 +235,7 @@ def setup_mod_id():
                     if not is_already_save(dependency_name):
                         curse_forge_link = "https://www.curseforge.com/minecraft/mc-mods/"+dependency["slug"]
                         to_write.append(f'{dependency_name} - {dependency_id} - {curse_forge_link}')
-                
+
                     add_to_list(dependency_id, dependency_name, "mod")
 
             if len(to_write) > 0: 
