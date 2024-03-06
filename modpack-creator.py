@@ -8,12 +8,12 @@ datapack_path = "datapack/"
 
 
 def filter_on(files, path, contain_data):
-    if accepted_filter:
-        return accepted_filter_on(files, path, contain_data)
     return [file for file in files if all(data in file[path] for data in contain_data)]
 
 
 def accepted_filter_on(files, path, contain_data):
+    if not accepted_filter:
+        return filter_on(files, path, contain_data)
     res = []
     
     for file in files:
@@ -119,6 +119,7 @@ def setup_target_mod(loader_id):
         to_write.append(f'{mod_name} - {mod_id} - {curse_forge_link}')
 
     if len(to_write) > 0:    
+        print("aaa")
         write_file(to_write, data_path, "mods_id.txt")
 
 
@@ -189,12 +190,15 @@ def setup_target_modpack_mod(loader_id):
                 print(f"pas de cat : {mod_name}")
     
     if len(to_write_modpacks) > 0:    
+        print("bbb")
         write_file(to_write_modpacks, data_path, "modpacks_id.txt")
 
-    if len(to_write_mods) > 0:    
+    if len(to_write_mods) > 0:   
+        print("ccc") 
         write_file(to_write_mods, data_path, "mods_id.txt")
 
-    if len(to_write_textures) > 0:    
+    if len(to_write_textures) > 0:   
+        print("ddd") 
         write_file(to_write_textures, data_path, "resourcepacks_id.txt")
 
 
@@ -210,7 +214,7 @@ def setup_mod_id():
             print(f'11{get_name_save(mod_id)} not found in {loader_name} {game_version}')
             return
         
-        file = filter_on(file["data"], "gameVersions", loader_info)
+        file = accepted_filter_on(file["data"], "gameVersions", loader_info)
         if len(file) == 0:
             print(f'22{get_name_save(mod_id)} not found in {loader_name} {game_version}')
             return
@@ -231,7 +235,8 @@ def setup_mod_id():
                 
                     add_to_list(dependency_id, dependency_name, "mod")
 
-            if len(to_write) > 0:    
+            if len(to_write) > 0: 
+                print("eee")
                 write_file(to_write, data_path, "mods_id.txt")
                 
         file = file[0]
@@ -255,7 +260,7 @@ def setup_texturepacks_id():
             print(f'33{get_name_save(mod_id)} not found in {game_version}')
             return
         
-        file = filter_on(file["data"], "gameVersions", loader_info)
+        file = accepted_filter_on(file["data"], "gameVersions", loader_info)
         if len(file) == 0:
             print(f'44{get_name_save(mod_id)} not found in {game_version}')
             return
