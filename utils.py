@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 import yaml
 import json
+import shutil
 
 counter_request = 0
 total_request = 0
@@ -11,7 +12,7 @@ total_request = 0
 
 def delete_folder_if_exist(directory):
     if os.path.exists(directory):
-        os.rmdir(directory)
+        shutil.rmtree(directory, ignore_errors=True)
 
 
 def delete_files_if_exist(files):
@@ -69,7 +70,7 @@ def request(path, params=None):
     global counter_request, total_request
 
     # module anti spam / ddos
-    if counter_request >= 1500:
+    if counter_request >= 15:
         counter_request = 0
         time.sleep(1)
 
@@ -77,3 +78,7 @@ def request(path, params=None):
     counter_request += 1
     total_request += 1
     return r.json()
+
+
+def get_total_request():
+    return total_request

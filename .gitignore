@@ -1,2 +1,4 @@
 data/
+datapack/
+*.zip
 __pycache__/
