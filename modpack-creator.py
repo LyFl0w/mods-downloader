@@ -30,6 +30,9 @@ def accepted_filter_on(files, path, contain_data: list, check_loader=True):
                     res.append(file)
                     break
 
+    tmp_res = filter_on(res, path, [contain_data[0]])
+    if len(tmp_res) > 0:
+        return tmp_res
     return res
 
 
@@ -254,7 +257,7 @@ def setup_mod_id():
                         curse_forge_link = "https://www.curseforge.com/minecraft/mc-mods/"+dependency["slug"]
                         to_write.append(f'{dependency_name}{spliter}{dependency_id}{spliter}{curse_forge_link}')
                     if dependency_name == "Kotlin for Forge":
-                        print("modpack Kotlin for Forge")
+                        print(f"{mod_id} Kotlin for Forge")
                     add_to_list(dependency_id, dependency_name, "mod")
 
             if len(to_write) > 0: 
