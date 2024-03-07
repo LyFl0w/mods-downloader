@@ -6,9 +6,7 @@ Eating Animation [Fabric] &/& https://www.curseforge.com/minecraft/mc-mods/eatin
 Falling Leaves (Fabric) &/& https://www.curseforge.com/minecraft/mc-mods/falling-leaves-fabric
 Make Bubbles Pop [Client] [Forge/Fabric/Quilt] &/& https://www.curseforge.com/minecraft/mc-mods/make-bubbles-pop
 Status Effect Bars &/& https://www.curseforge.com/minecraft/mc-mods/status-effect-bars
-SuperFancyClouds: Rearchitected &/& https://www.curseforge.com/minecraft/mc-mods/superfancyclouds-refabricated
 Pick Up Notifier [Forge & Fabric] &/& https://www.curseforge.com/minecraft/mc-mods/pick-up-notifier
-Smooth Swapping &/& https://www.curseforge.com/minecraft/mc-mods/smooth-swapping
 Visuality &/& https://www.curseforge.com/minecraft/mc-mods/visuality
 AmbientSounds &/& https://www.curseforge.com/minecraft/mc-mods/ambientsounds
 Entity Model Features &/& https://www.curseforge.com/minecraft/mc-mods/entity-model-features

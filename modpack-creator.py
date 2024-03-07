@@ -63,7 +63,7 @@ def get_id_files_content():
         for line in lines:
             split = line.split(f"{spliter}")
             content[split[0]] = split[1]
-            link[split[1]] = split[2][:-2]
+            link[split[1]] = split[2]
     return content, link
 
 
