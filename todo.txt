@@ -1,0 +1,1 @@
+get fabric loader : https://meta.fabricmc.net/v2/versions/loader/

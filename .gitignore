@@ -1,4 +1,6 @@
 data/
-datapack/
+modpacks/
+manifests/
 *.zip
+*.env
 __pycache__/

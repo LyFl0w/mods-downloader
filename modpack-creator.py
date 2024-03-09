@@ -5,7 +5,7 @@ curse_forge_api = "https://www.curseforge.com/api/v1"
 
 spliter = " &/& "
 data_path = "data/"
-datapack_path = "datapack/"
+modpacks_path = "modpacks/"
 
 
 def filter_on(files, path, contain_data):
@@ -127,7 +127,6 @@ def setup_target_mod(loader_id):
 
         if isinstance(r, dict) or index + 50 > 10_000:
             print(f"mod not found : {mod_name}")
-            print(r)
             continue
 
         mod = r[0]
@@ -172,7 +171,6 @@ def setup_target_modpack_mod(loader_id):
 
             if isinstance(r, dict) or index + 50 > 10_000:
                 print(f"modpack not found : {modpack_name}")
-                print(r)
                 continue
             
             modpack = r[0]
@@ -268,7 +266,6 @@ def setup_mod_id():
         files.append((int(mod_id), int(file_id)))
 
     for mod_id in mods_id:
-        print(mod_id)
         setup_mod(mod_id)
 
 
@@ -298,10 +295,10 @@ def setup_texturepacks_id():
 
 
 def create_mods_pack():
-    delete_folder_if_exist(datapack_path)
+    delete_folder_if_exist(modpacks_path)
     
-    os.mkdir(datapack_path)
-    create_files_if_not_exist(datapack_path, ["manifest.json", "modlist.html"])
+    os.mkdir(modpacks_path)
+    create_files_if_not_exist(modpacks_path, ["manifest.json", "modlist.html"])
 
     manifest = {
         "minecraft": {
@@ -335,12 +332,12 @@ def create_mods_pack():
         modlist += f"\n<li><a href=\"{get_mod_link(str(project_id))}\">{get_name_save(project_id)}</a></li>"
     modlist += "\n</ul>"
     
-    write_file([json.dumps(manifest, indent=1)], datapack_path, "manifest.json")
-    write_file([modlist], datapack_path, "modlist.html")
+    write_file([json.dumps(manifest, indent=1)], modpacks_path, "manifest.json")
+    write_file([modlist], modpacks_path, "modlist.html")
 
     file_name = f'{manifest["name"]}-{manifest["minecraft"]["version"]}-{manifest["version"]}'
     delete_files_if_exist([file_name])
-    shutil.make_archive(file_name, 'zip', datapack_path)
+    shutil.make_archive(file_name, 'zip', modpacks_path)
 
 
 if __name__ == "__main__":
