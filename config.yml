@@ -7,9 +7,16 @@ minecraft:
     - "1.20.2"
     - "1.20.1"
     - "1.20"
-    
+
+overrides:
+  use-modpack-overrides: true
+  merge-custom-overrides: true
+
+build:
+  curseforge-modpack-zip: true
+  classic-zip-folder: true
+
 modpack:
-  name: "Fabulously Optimized ++"
+  name: "Fabulously Optimized ++ - $VERSION"
   version: "1.0.0"
   author: "LyFlow"
-  
