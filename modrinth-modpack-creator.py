@@ -184,14 +184,13 @@ def setup_target_modpack_mod():
     to_write_modpacks = []
     to_write_mods = []
     to_write_resourcepacks = []
+
     for line in lines:
         modpack_id = -1
         modpack_name = line.split(f"{spliter}")[0]
 
         if is_already_save(modpack_name):
             modpack_id = get_id_save(modpack_name)
-
-        r = []
         
         if modpack_id == -1:
             r = request(f'{api}/search', params={'categories' : loader_info[0], 'project_type' : "modpack", 'query': modpack_name})
@@ -206,7 +205,7 @@ def setup_target_modpack_mod():
                 print(f"modpack not found : {modpack_name}")
                 print(r)
                 continue
-
+            
             modpack = r[0]
             modpack_id = modpack['project_id']
             modpack_name = modpack['title']
@@ -221,7 +220,7 @@ def setup_target_modpack_mod():
         
         for dependency in dependencies:
             project_name = dependency["title"]
-            project_id = dependency["project_id"]
+            project_id = dependency["id"]
             project_type = dependency["project_type"]
 
             modrinth_link = f"https://modrinth.com/{project_type}/{dependency["slug"]}"
@@ -249,7 +248,6 @@ def setup_target_modpack_mod():
 
 def setup_mod_id():
     loader_name = loader_info[0]
-    loader_id = mods_loader_type[loader_name]
     game_version = loader_info[1]
 
     def setup_mod(mod_id):

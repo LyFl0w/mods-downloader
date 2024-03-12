@@ -1,2 +1,0 @@
-download and use curseforge pack (because modpack forget to update their dependencies)
-use modrinth instead of curseforge
