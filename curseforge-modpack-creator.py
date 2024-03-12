@@ -343,9 +343,9 @@ def create_mods_pack():
     build_info = modpack_info["build"]
     modpack_inf = modpack_info["modpack"]
 
-    modpack_name = modpack_inf["name"]
     modpack_version = modpack_inf["version"]
     modpack_author = modpack_inf["author"]
+    modpack_name = modpack_inf["name"].replace("$VERSION", modpack_version)
 
     minecraft_version = modpack_info["minecraft"]["version"]
     

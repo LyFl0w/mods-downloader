@@ -1,1 +1,2 @@
-get fabric loader : https://meta.fabricmc.net/v2/versions/loader/
+download and use curseforge pack (because modpack forget to update their dependencies)
+use modrinth instead of curseforge
