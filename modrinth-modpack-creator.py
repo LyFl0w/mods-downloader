@@ -211,19 +211,28 @@ def setup_target_modpack_mod():
             modpack_name = modpack['title']
             modrinth_link = "https://modrinth.com/modpack/"+modpack["slug"]
 
-            if not is_already_save(project_name):
+            if not is_already_save(modpack_name):
                 to_write_modpacks.append(f'{modpack_name}{spliter}{modpack_id}{spliter}{modrinth_link}')
         
-        dependencies = request(f'{api}/project/{modpack_id}/dependencies')["projects"]
-        dependencies = accepted_filter_on(dependencies, "loaders", [loader_version])
-        dependencies = accepted_filter_on(dependencies, "game_versions", to_filter)
+        dependencies_version = request(f'{api}/project/{modpack_id}/version', {"loaders" : [loader_version], game_version : to_filter})
+        if len(dependencies_version) == 0:
+            print(f"{modpack_name} not found in {loader_version} {to_filter}")
+            continue
+
+        latest_dependencies = [dependency["project_id"] for dependency in dependencies_version[0]["dependencies"]]
+        all_dependencies = request(f'{api}/project/{modpack_id}/dependencies')["projects"]
         
-        for dependency in dependencies:
-            project_name = dependency["title"]
+        for dependency in all_dependencies:
             project_id = dependency["id"]
+
+            if project_id not in latest_dependencies:
+                continue
+            latest_dependencies.remove(project_id)
+
+            project_name = dependency["title"]
             project_type = dependency["project_type"]
 
-            modrinth_link = f"https://modrinth.com/{project_type}/{dependency["slug"]}"
+            modrinth_link = f'https://modrinth.com/{project_type}/{dependency["slug"]}'
             to_write = f'{project_name}{spliter}{project_id}{spliter}{modrinth_link}'
             
             if not is_already_save(project_name):
@@ -235,7 +244,7 @@ def setup_target_modpack_mod():
                     continue
 
             add_to_list(project_id, project_name, project_type)
-    
+
     if len(to_write_modpacks) > 0:
         write_file(to_write_modpacks, data_path, "modpacks_id.txt")
 
@@ -423,18 +432,18 @@ if __name__ == "__main__":
     loader_info = [modpack_info["minecraft"]["loader"].lower(), modpack_info["minecraft"]["version"]]
     print(f'detected info : {loader_info}')
 
-    setup_target_modpack_mod(loader_info)
-    setup_target_mod(mods_loader_type[loader_info[0]])
+    setup_target_modpack_mod()
+    setup_target_mod()
     setup_target_resourcepacks()
-    print(f'detected mods on curseforge : {len(mods_id)}')
+    print(f'detected mods on modrinth : {len(mods_id)}')
 
-    setup_mod_id()
-    setup_texturepacks_id()
+    #setup_mod_id()
+    #setup_texturepacks_id()
     print(f'\ntotal mods to download : {len(mods_id)}')
     print(f'total texturepacks to download : {len(resourcepacks_id)}')
     print(f'\ntotal requests : {get_total_request()}')
 
     print(mods_id)
 
-    create_mods_pack()
+    #create_mods_pack()
     #write_file(files, data_path, "infmods.txt")

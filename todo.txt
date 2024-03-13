@@ -1,2 +1,2 @@
-https://docs.modrinth.com/#tag/projects/operation/scheduleProject
+https://docs.modrinth.com/#tag/versions
 récupèrer le 1er element qui possède la version en caracteristique et récu
