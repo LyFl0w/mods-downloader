@@ -1,7 +1,7 @@
 import urllib.request
 from utils import *
 
-api = "https://staging-api.modrinth.com/v2"
+api = "https://api.modrinth.com/v2"
 
 spliter = " &/& "
 data_path = "data/"
@@ -214,7 +214,6 @@ def setup_target_modpack_mod():
             if not is_already_save(modpack_name):
                 to_write_modpacks.append(f'{modpack_name}{spliter}{modpack_id}{spliter}{modrinth_link}')
         
-        print({"loaders" : [loader_version], "game_versions" : to_filter})
         dependencies_version = request(f'{api}/project/{modpack_id}/version', {"loaders" : [loader_version]})
         dependencies_version = accepted_filter_on(dependencies_version, "game_versions", to_filter)
 
@@ -268,32 +267,33 @@ def setup_mod_id():
         to_filter += modpack_info_data_supp 
 
     def setup_mod(mod_id):
-        file = request(f'{api}/project/{mod_id}/version', params={"loaders" : [loader_name]})
-        file = accepted_filter_on(file, "game_versions", to_filter)
+        file = request(f'{api}/project/{mod_id}/version?loaders=["{loader_name}"]&game_versions={to_filter}'.replace("\'", "\""))
 
-        if len(file) == 0:
-            print(f'{get_name_save(mod_id)} not found in {loader_name} {game_version}')
-            return
-
-        file = file[0]
         if len(file) == 0:
             print(f'{get_name_save(mod_id)} not found in {loader_name} {game_version}')
             return
         
-        latest_dependencies = [dependency["project_id"] for dependency in file["dependencies"]]
-        if len(latest_dependencies) != 0:
+        for mc_version in to_filter:
+            for filter_file in file:
+                try :
+                    if mc_version in filter_file['game_versions']:
+                        file = filter_file
+                        break
+                except:
+                    pass
+
+        project_dependencies = file["dependencies"]
+        if len(project_dependencies) != 0:
             all_dependencies = request(f'{api}/project/{mod_id}/dependencies')["projects"]
-            
+
             to_write = []
-            for dependency in all_dependencies:
-                project_id = dependency["id"]
+            for dependency in project_dependencies:
 
-                if project_id not in latest_dependencies:
+                if dependency["dependency_type"] != "required":
                     continue
-                latest_dependencies.remove(project_id)
-
-                if dependency["client_side"] != "required":
-                    continue
+                
+                project_id = dependency["project_id"]
+                dependency = filter_on(all_dependencies, "id", [project_id])[0]
 
                 project_name = dependency["title"]
 
@@ -324,23 +324,36 @@ def setup_mod_id():
 def setup_texturepacks_id():
     game_version = loader_info[1]
 
-    def setup_texture(mod_id):
-        file = request(f'{api}/mods/{mod_id}/files', params={'sort': 'dateCreated', 'sortDescending' : 'true', 'removeAlphas': modpack_info_remove_alpha})
-        if "data" not in file:
-            print(f'{get_name_save(mod_id)} not found in {game_version}')
-            return
+    to_filter = [game_version]
+    if accepted_filter:
+        to_filter += modpack_info_data_supp 
 
-        to_filter = [game_version]
-        if accepted_filter:
-            to_filter += modpack_info_data_supp
-        file = accepted_filter_on(file["data"], "gameVersions", to_filter)
+    def setup_texture(texture_id):
+        file = request(f'{api}/project/{texture_id}/version?game_versions={to_filter}'.replace("\'", "\""))
+
         if len(file) == 0:
-            print(f'{get_name_save(mod_id)} not found in {game_version}')
+            print(f'{get_name_save(texture_id)} not found in {game_version}')
             return
         
-        file = file[0]
-        file_id = file["id"]
-        files.append((int(mod_id), int(file_id)))
+        for mc_version in to_filter:
+            for filter_file in file:
+                try :
+                    if mc_version in filter_file['game_versions']:
+                        file = filter_file
+                        break
+                except:
+                    pass
+        
+        datas = file["files"][0]
+
+        data = {
+            "path": "resourcepacks/"+datas["filename"],
+            "hashes" : datas["hashes"],
+            "downloads": [datas["url"]],
+            "fileSize": datas["size"]
+        }
+
+        files.append(data)
 
     for texture_id in resourcepacks_id:
         setup_texture(texture_id)
@@ -439,8 +452,8 @@ if __name__ == "__main__":
     print(f'detected mods on modrinth : {len(mods_id)}')
 
     setup_mod_id()
-    print("files : \n", files)
-    #setup_texturepacks_id()
+    #print("files : \n", files)
+    setup_texturepacks_id()
     print(f'\ntotal mods to download : {len(mods_id)}')
     print(f'total texturepacks to download : {len(resourcepacks_id)}')
     print(f'\ntotal requests : {get_total_request()}')
