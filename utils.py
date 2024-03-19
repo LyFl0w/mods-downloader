@@ -102,7 +102,7 @@ def unzip_file(path_from, path_to):
     delete_files_if_exist([path_from])
 
 
-def get_files(path):
+def get_files(path, type=None):
     if not os.path.isdir(path):
         return []
     
@@ -111,8 +111,12 @@ def get_files(path):
     for element in os.listdir(path):
         chemin = os.path.join(path, element)
         
-        if os.path.isfile(chemin):
-            fichiers.append(chemin)
+        if type is None:
+            if os.path.isfile(chemin):
+                fichiers.append(chemin)
+        else:
+            if os.path.isfile(chemin) and str(element).endswith("."+type):
+                fichiers.append(chemin)
     
     return fichiers
 
@@ -157,6 +161,10 @@ def dict_to_txt(dictionary, file_path):
                 value = '[' + ', '.join(map(str, value)) + ']'
             line = f"{key}:{value}\n"
             file.write(line)
+
+
+def copy_file(source, destination):
+    shutil.copy(source, destination)
 
 
 def get_total_request():

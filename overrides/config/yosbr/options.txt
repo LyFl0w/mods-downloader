@@ -1,3 +1,4 @@
+maxFps:150
 renderClouds:"false"
 resourcePacks:["file/FreshAnimations_v1.9.zip"]
 key_key.optigui.inspect:key.keyboard.unknown

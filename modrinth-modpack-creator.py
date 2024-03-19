@@ -404,14 +404,16 @@ def create_mods_pack():
         write_file([json.dumps(manifest, indent=4)], modpacks_path, "modrinth.index.json")
 
         if overrides_info["use-modpack-overrides"] == True and overrides_info["edit-overrides-options"] == True:
-            options_overrides_path = "overrides/config/yosbr/options.txt"
+            options_overrides_path = "overrides/config/yosbr"
 
-            datapack_options_overrides = extract_txt_data(modpacks_path+"/"+options_overrides_path)
-            custom_options_overrides = extract_txt_data(options_overrides_path)
+            datapack_options_overrides = extract_txt_data(modpacks_path+"/"+options_overrides_path+"/options.txt")
+            custom_options_overrides = extract_txt_data(options_overrides_path+"/options.txt")
             overrides_options = merge_options(datapack_options_overrides, custom_options_overrides)
+            dict_to_txt(overrides_options, modpacks_path+"/"+options_overrides_path+"/options.txt")
 
-            dict_to_txt(overrides_options, modpacks_path+"/"+options_overrides_path)
-
+            servers = get_files(options_overrides_path, "dat")[0]
+            copy_file(servers, modpacks_path+"/"+options_overrides_path)
+            
 
         delete_folder_if_exist(merged_modpack)
         os.mkdir(merged_modpack)
