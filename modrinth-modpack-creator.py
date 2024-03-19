@@ -214,10 +214,14 @@ def setup_target_modpack_mod():
             if not is_already_save(modpack_name):
                 to_write_modpacks.append(f'{modpack_name}{spliter}{modpack_id}{spliter}{modrinth_link}')
         
-        dependencies_version = request(f'{api}/project/{modpack_id}/version', {"loaders" : [loader_version], game_version : to_filter})
+        print({"loaders" : [loader_version], "game_versions" : to_filter})
+        dependencies_version = request(f'{api}/project/{modpack_id}/version', {"loaders" : [loader_version]})
+        dependencies_version = accepted_filter_on(dependencies_version, "game_versions", to_filter)
+
         if len(dependencies_version) == 0:
             print(f"{modpack_name} not found in {loader_version} {to_filter}")
             continue
+        
 
         latest_dependencies = [dependency["project_id"] for dependency in dependencies_version[0]["dependencies"]]
         all_dependencies = request(f'{api}/project/{modpack_id}/dependencies')["projects"]
@@ -259,46 +263,59 @@ def setup_mod_id():
     loader_name = loader_info[0]
     game_version = loader_info[1]
 
+    to_filter = [game_version]
+    if accepted_filter:
+        to_filter += modpack_info_data_supp 
+
     def setup_mod(mod_id):
-        file = request(f'{api}/mods/{mod_id}/files', params={'sort': 'dateCreated', 'sortDescending' : 'true', 'gameFlavorId' : loader_id,
-                                                                                 'removeAlphas': modpack_info_remove_alpha})
-        if "data" not in file:
+        file = request(f'{api}/project/{mod_id}/version', params={"loaders" : [loader_name]})
+        file = accepted_filter_on(file, "game_versions", to_filter)
+
+        if len(file) == 0:
             print(f'{get_name_save(mod_id)} not found in {loader_name} {game_version}')
             return
-        
-        to_filter = [game_version]
-        if accepted_filter:
-            to_filter += modpack_info_data_supp
 
-        file = accepted_filter_on(file["data"], "gameVersions", to_filter)
-        file = accepted_filter_on(file["data"], "loader", "TODO : HERE")
+        file = file[0]
         if len(file) == 0:
             print(f'{get_name_save(mod_id)} not found in {loader_name} {game_version}')
             return
         
-        dependencies = request(f'{api}/mods/{mod_id}/dependencies')
-
-        if "data" in dependencies:
+        latest_dependencies = [dependency["project_id"] for dependency in file["dependencies"]]
+        if len(latest_dependencies) != 0:
+            all_dependencies = request(f'{api}/project/{mod_id}/dependencies')["projects"]
+            
             to_write = []
-            for dependency in dependencies["data"]:
-                dependency_name = dependency["name"]
-                dependency_id = dependency["id"]
-                relation = dependency["type"]
-                
-                if relation == "RequiredDependency":
-                    if not is_already_save(dependency_name):
-                        curse_forge_link = "https://www.curseforge.com/minecraft/mc-mods/"+dependency["slug"]
-                        to_write.append(f'{dependency_name}{spliter}{dependency_id}{spliter}{curse_forge_link}')
-                    if dependency_name == "Kotlin for Forge":
-                        print(f"{mod_id} Kotlin for Forge")
-                    add_to_list(dependency_id, dependency_name, "mod")
+            for dependency in all_dependencies:
+                project_id = dependency["id"]
+
+                if project_id not in latest_dependencies:
+                    continue
+                latest_dependencies.remove(project_id)
+
+                if dependency["client_side"] != "required":
+                    continue
+
+                project_name = dependency["title"]
+
+                modrinth_link = f'https://modrinth.com/mod/{dependency["slug"]}'
+
+                if not is_already_save(project_name):
+                    to_write.append(f'{project_name}{spliter}{project_id}{spliter}{modrinth_link}')
+                add_to_list(project_id, project_name, "mod")
 
             if len(to_write) > 0: 
                 write_file(to_write, data_path, "mods_id.txt")
-                
-        file = file[0]
-        file_id = file["id"]
-        files.append((int(mod_id), int(file_id)))
+        
+        datas = file["files"][0]
+
+        data = {
+            "path": "mods/"+datas["filename"],
+            "hashes" : datas["hashes"],
+            "downloads": [datas["url"]],
+            "fileSize": datas["size"]
+        }
+
+        files.append(data)
 
     for mod_id in mods_id:
         setup_mod(mod_id)
@@ -338,57 +355,41 @@ def create_mods_pack():
 
     modpack_version = modpack_inf["version"]
     modpack_author = modpack_inf["author"]
+    modpack_summary = modpack_inf["summary"] + " - by " + modpack_author
     modpack_name = modpack_inf["name"].replace("$VERSION", modpack_version)
 
     minecraft_version = modpack_info["minecraft"]["version"]
     
-    if build_info["curseforge-modpack-zip"] == True:
-        create_files_if_not_exist(modpacks_path, ["manifest.json", "modlist.html"])
+    if build_info["modrinth-modpack-zip"] == True:
+        create_files_if_not_exist(modpacks_path, ["modrinth.index.json"])
 
         loader_version = ""
-        if loader_info[0] == "Fabric":
-            loader_version = f'fabric-{request("https://meta.fabricmc.net/v2/versions/loader/")[0]["version"]}'
+        if loader_info[0] == "fabric":
+            loader_version = request("https://meta.fabricmc.net/v2/versions/loader/")[0]["version"]
 
         manifest = {
-            "minecraft": {
-                "version": minecraft_version,
-                "modLoaders": [
-                {
-                    "id": loader_version,
-                    "primary": True
-                }
-                ]
-            },
-            "manifestType": "minecraftModpack",
-            "manifestVersion": 1,
+            "formatVersion": 1,
+            "game": "minecraft",
+            "versionId": modpack_version,
             "name": modpack_name,
-            "version": modpack_version,
-            "author": modpack_author,
-            "files": [],
-            "overrides": "overrides"
+            "summary": modpack_summary,
+
+            "files": [file for file in files],
+
+            "dependencies": {
+                "minecraft": minecraft_version,
+                "fabric-loader": loader_version
+            }
         }
         
-        modlist = "<ul>"
-        for file in files:
-            project_id = file[0]
-            manifest["files"].append({
-                    "projectID": project_id,
-                    "fileID": file[1],
-                    "required": True
-                })
-            
-            modlist += f"\n<li><a href=\"{get_mod_link(str(project_id))}\">{get_name_save(project_id)}</a></li>"
-        modlist += "\n</ul>"
-        
-        write_file([json.dumps(manifest, indent=1)], modpacks_path, "manifest.json")
-        write_file([modlist], modpacks_path, "modlist.html")
+        write_file([json.dumps(manifest, indent=4)], modpacks_path, "modrinth.index.json")
 
-        file_path = f'{modpacks_path}/curseforge'
+        file_path = f'{modpacks_path}/modrinth'
         os.mkdir(file_path)
 
-        shutil.make_archive(f"{file_path}/{modpack_name}-{modpack_version}", 'zip', modpacks_path)
+        shutil.make_archive(f"{file_path}/{modpack_name}", 'zip', modpacks_path)
     
-    if build_info["classic-zip-folder"] == True:
+    if build_info["classic-zip-folder"] == True and False:
         default_file_path = modpacks_path+"classic/"
         os.mkdir(default_file_path)
         os.mkdir(default_file_path+"mods/")
@@ -437,7 +438,8 @@ if __name__ == "__main__":
     setup_target_resourcepacks()
     print(f'detected mods on modrinth : {len(mods_id)}')
 
-    #setup_mod_id()
+    setup_mod_id()
+    print("files : \n", files)
     #setup_texturepacks_id()
     print(f'\ntotal mods to download : {len(mods_id)}')
     print(f'total texturepacks to download : {len(resourcepacks_id)}')
@@ -445,5 +447,5 @@ if __name__ == "__main__":
 
     print(mods_id)
 
-    #create_mods_pack()
+    create_mods_pack()
     #write_file(files, data_path, "infmods.txt")

@@ -13,10 +13,12 @@ overrides:
   merge-custom-overrides: true
 
 build:
-  curseforge-modpack-zip: true
-  classic-zip-folder: true
+  curseforge-modpack-zip: false
+  modrinth-modpack-zip: true
+  classic-zip-folder: false
 
 modpack:
   name: "Fabulously Optimized ++ - $VERSION"
   version: "1.0.0"
   author: "LyFlow"
+  summary: "Improve your performance and graphic"
