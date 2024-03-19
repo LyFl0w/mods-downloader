@@ -4,3 +4,4 @@ manifests/
 *.zip
 *.env
 __pycache__/
+merge/
