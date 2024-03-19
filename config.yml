@@ -10,7 +10,7 @@ minecraft:
 
 overrides:
   use-modpack-overrides: true
-  merge-custom-overrides: true
+  edit-overrides-options: true
 
 build:
   curseforge-modpack-zip: false
@@ -18,7 +18,7 @@ build:
   classic-zip-folder: false
 
 modpack:
-  name: "Fabulously Optimized ++ - $VERSION"
+  name: "Fabulously Optimized ++ $VERSION"
   version: "1.0.0"
   author: "LyFlow"
-  summary: "Improve your performance and graphic"
+  summary: "Improve your graphic and performance"

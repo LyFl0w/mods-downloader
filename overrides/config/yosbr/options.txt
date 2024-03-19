@@ -1,0 +1,4 @@
+renderClouds:"false"
+resourcePacks:["file/FreshAnimations_v1.9.zip"]
+key_key.optigui.inspect:key.keyboard.unknown
+key_key.fabricskyboxes.toggle.debug_hud:key.keyboard.unknown

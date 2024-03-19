@@ -6,6 +6,17 @@ api = "https://api.modrinth.com/v2"
 spliter = " &/& "
 data_path = "data/"
 modpacks_path = "modpacks/"
+merged_modpack = "merge/"
+
+
+def get_nice_minecraft_version(to_filter, file):
+    for mc_version in to_filter:
+                for filter_file in file:
+                    try :
+                        if mc_version in filter_file['game_versions']:
+                            return filter_file
+                    except:
+                        pass
 
 
 def filter_on(files, path, contain_data):
@@ -221,8 +232,20 @@ def setup_target_modpack_mod():
             print(f"{modpack_name} not found in {loader_version} {to_filter}")
             continue
         
+        version_dependencies = dependencies_version[0]
 
-        latest_dependencies = [dependency["project_id"] for dependency in dependencies_version[0]["dependencies"]]
+        # download overrides 
+        if overrides_info["use-modpack-overrides"] == True:
+            file_modpack = version_dependencies["files"][0]
+            file_name = file_modpack["filename"]
+            path = modpacks_path
+            
+            download_url_file(file_modpack["url"], path, file_name)
+            unzip_file(path+"/"+file_name, path)
+            delete_files_if_exist(get_files(path))
+
+
+        latest_dependencies = [dependency["project_id"] for dependency in version_dependencies["dependencies"]]
         all_dependencies = request(f'{api}/project/{modpack_id}/dependencies')["projects"]
         
         for dependency in all_dependencies:
@@ -273,14 +296,7 @@ def setup_mod_id():
             print(f'{get_name_save(mod_id)} not found in {loader_name} {game_version}')
             return
         
-        for mc_version in to_filter:
-            for filter_file in file:
-                try :
-                    if mc_version in filter_file['game_versions']:
-                        file = filter_file
-                        break
-                except:
-                    pass
+        file = get_nice_minecraft_version(to_filter, file)
 
         project_dependencies = file["dependencies"]
         if len(project_dependencies) != 0:
@@ -335,14 +351,7 @@ def setup_texturepacks_id():
             print(f'{get_name_save(texture_id)} not found in {game_version}')
             return
         
-        for mc_version in to_filter:
-            for filter_file in file:
-                try :
-                    if mc_version in filter_file['game_versions']:
-                        file = filter_file
-                        break
-                except:
-                    pass
+        file = get_nice_minecraft_version(to_filter, file)
         
         datas = file["files"][0]
 
@@ -360,9 +369,6 @@ def setup_texturepacks_id():
 
 
 def create_mods_pack():
-    delete_folder_if_exist(modpacks_path)
-    os.mkdir(modpacks_path)
-
     build_info = modpack_info["build"]
     modpack_inf = modpack_info["modpack"]
 
@@ -397,10 +403,19 @@ def create_mods_pack():
         
         write_file([json.dumps(manifest, indent=4)], modpacks_path, "modrinth.index.json")
 
-        file_path = f'{modpacks_path}/modrinth'
-        os.mkdir(file_path)
+        if overrides_info["use-modpack-overrides"] == True and overrides_info["edit-overrides-options"] == True:
+            options_overrides_path = "overrides/config/yosbr/options.txt"
 
-        shutil.make_archive(f"{file_path}/{modpack_name}", 'zip', modpacks_path)
+            datapack_options_overrides = extract_txt_data(modpacks_path+"/"+options_overrides_path)
+            custom_options_overrides = extract_txt_data(options_overrides_path)
+            overrides_options = merge_options(datapack_options_overrides, custom_options_overrides)
+
+            dict_to_txt(overrides_options, modpacks_path+"/"+options_overrides_path)
+
+
+        delete_folder_if_exist(merged_modpack)
+        os.mkdir(merged_modpack)
+        shutil.make_archive(f"{merged_modpack}/{modpack_name}", 'zip', modpacks_path)
     
     if build_info["classic-zip-folder"] == True and False:
         default_file_path = modpacks_path+"classic/"
@@ -429,7 +444,11 @@ def create_mods_pack():
 if __name__ == "__main__":
     create_files_if_not_exist(data_path, ["mods_id.txt", "modpacks_id.txt", "resourcepacks_id.txt"])
     
+    delete_folder_if_exist(modpacks_path)
+    os.mkdir(modpacks_path)
+
     modpack_info = read_yaml_file("config.yml")
+    overrides_info = modpack_info["overrides"]
     modpack_info_data_supp = modpack_info["minecraft"]["accepted"]
     modpack_info_remove_alpha = str(modpack_info["minecraft"]["remove-alpha"]).lower()
     accepted_filter = len(modpack_info_remove_alpha) > 0
@@ -452,13 +471,10 @@ if __name__ == "__main__":
     print(f'detected mods on modrinth : {len(mods_id)}')
 
     setup_mod_id()
-    #print("files : \n", files)
     setup_texturepacks_id()
     print(f'\ntotal mods to download : {len(mods_id)}')
     print(f'total texturepacks to download : {len(resourcepacks_id)}')
     print(f'\ntotal requests : {get_total_request()}')
-
-    print(mods_id)
 
     create_mods_pack()
     #write_file(files, data_path, "infmods.txt")
