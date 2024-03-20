@@ -324,14 +324,7 @@ def setup_mod_id():
         
         datas = file["files"][0]
 
-        data = {
-            "path": "mods/"+datas["filename"],
-            "hashes" : datas["hashes"],
-            "downloads": [datas["url"]],
-            "fileSize": datas["size"]
-        }
-
-        files.append(data)
+        files.append(("mods/"+datas["filename"], datas["hashes"], [datas["url"]], datas["size"]))
 
     for mod_id in mods_id:
         setup_mod(mod_id)
@@ -355,21 +348,13 @@ def setup_texturepacks_id():
         
         datas = file["files"][0]
 
-        data = {
-            "path": "resourcepacks/"+datas["filename"],
-            "hashes" : datas["hashes"],
-            "downloads": [datas["url"]],
-            "fileSize": datas["size"]
-        }
-
-        files.append(data)
+        files.append(("resourcepacks/"+datas["filename"], datas["hashes"], [datas["url"]], datas["size"]))
 
     for texture_id in resourcepacks_id:
         setup_texture(texture_id)
 
 
 def create_mods_pack():
-    build_info = modpack_info["build"]
     modpack_inf = modpack_info["modpack"]
 
     modpack_version = modpack_inf["version"]
@@ -379,69 +364,49 @@ def create_mods_pack():
 
     minecraft_version = modpack_info["minecraft"]["version"]
     
-    if build_info["modrinth-modpack-zip"] == True:
-        create_files_if_not_exist(modpacks_path, ["modrinth.index.json"])
+    create_files_if_not_exist(modpacks_path, ["modrinth.index.json"])
 
-        loader_version = ""
-        if loader_info[0] == "fabric":
-            loader_version = request("https://meta.fabricmc.net/v2/versions/loader/")[0]["version"]
+    loader_version = ""
+    if loader_info[0] == "fabric":
+        loader_version = request("https://meta.fabricmc.net/v2/versions/loader/")[0]["version"]
 
-        manifest = {
-            "formatVersion": 1,
-            "game": "minecraft",
-            "versionId": modpack_version,
-            "name": modpack_name,
-            "summary": modpack_summary,
+    manifest = {
+        "formatVersion": 1,
+        "game": "minecraft",
+        "versionId": modpack_version,
+        "name": modpack_name,
+        "summary": modpack_summary,
 
-            "files": [file for file in files],
+        "files": [{
+                "path": path,
+                "hashes" : hashes,
+                "downloads": download,
+                "fileSize": file_size
+                } for (path, hashes, download, file_size) in files],
 
-            "dependencies": {
-                "minecraft": minecraft_version,
-                "fabric-loader": loader_version
-            }
+        "dependencies": {
+            "minecraft": minecraft_version,
+           "fabric-loader": loader_version
         }
+    }
         
-        write_file([json.dumps(manifest, indent=4)], modpacks_path, "modrinth.index.json")
+    write_file([json.dumps(manifest, indent=4)], modpacks_path, "modrinth.index.json")
 
-        if overrides_info["use-modpack-overrides"] == True and overrides_info["edit-overrides-options"] == True:
-            options_overrides_path = "overrides/config/yosbr"
+    if overrides_info["use-modpack-overrides"] == True and overrides_info["edit-overrides"] == True:
+        options_overrides_path = "overrides/config/yosbr"
 
-            datapack_options_overrides = extract_txt_data(modpacks_path+"/"+options_overrides_path+"/options.txt")
-            custom_options_overrides = extract_txt_data(options_overrides_path+"/options.txt")
-            overrides_options = merge_options(datapack_options_overrides, custom_options_overrides)
-            dict_to_txt(overrides_options, modpacks_path+"/"+options_overrides_path+"/options.txt")
+        datapack_options_overrides = extract_txt_data(modpacks_path+"/"+options_overrides_path+"/options.txt")
+        custom_options_overrides = extract_txt_data(options_overrides_path+"/options.txt")
+        overrides_options = merge_options(datapack_options_overrides, custom_options_overrides)
+        dict_to_txt(overrides_options, modpacks_path+"/"+options_overrides_path+"/options.txt")
 
-            servers = get_files(options_overrides_path, "dat")[0]
-            copy_file(servers, modpacks_path+"/"+options_overrides_path)
+        servers = get_files(options_overrides_path, "dat")[0]
+        copy_file(servers, modpacks_path+"/"+options_overrides_path)
             
 
-        delete_folder_if_exist(merged_modpack)
-        os.mkdir(merged_modpack)
-        shutil.make_archive(f"{merged_modpack}/{modpack_name}", 'zip', modpacks_path)
-    
-    if build_info["classic-zip-folder"] == True and False:
-        default_file_path = modpacks_path+"classic/"
-        os.mkdir(default_file_path)
-        os.mkdir(default_file_path+"mods/")
-        os.mkdir(default_file_path+"resourcepacks/")
-
-        for file in files:
-            mod_id = file[0]
-            file_id = file[1]
-            file_data = request(f"{api}/mods/{mod_id}/files/{file_id}")["data"]
-
-            file_name = file_data["fileName"]
-            file_url = file_data["downloadUrl"]
-            
-            file_path = default_file_path
-            if file_name.endswith(".jar"):
-                file_path += "mods/"
-            else:
-                file_path += "resourcepacks/"
-            
-            urllib.request.urlretrieve(file_url, file_path+file_name)
-        shutil.make_archive(f"{default_file_path}/{modpack_name}-{modpack_version}", 'zip', default_file_path)
-
+    delete_folder_if_exist(merged_modpack)
+    os.mkdir(merged_modpack)
+    shutil.make_archive(f"{merged_modpack}/{modpack_name}", 'zip', modpacks_path)
 
 if __name__ == "__main__":
     create_files_if_not_exist(data_path, ["mods_id.txt", "modpacks_id.txt", "resourcepacks_id.txt"])

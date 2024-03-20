@@ -10,12 +10,7 @@ minecraft:
 
 overrides:
   use-modpack-overrides: true
-  edit-overrides-options: true
-
-build:
-  curseforge-modpack-zip: false
-  modrinth-modpack-zip: true
-  classic-zip-folder: false
+  edit-overrides: true
 
 modpack:
   name: "Fabulously Optimized ++ $VERSION"
